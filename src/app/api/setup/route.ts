@@ -4,14 +4,15 @@ import { D1Database } from '@cloudflare/workers-types';
 
 export const runtime = 'edge';
 
-// We explicitly tell TypeScript that DB exists here
+// Fix: We added the index signature [key: string]: unknown
+// This tells TypeScript "This object has a DB, but it might have other things too."
 interface Env {
   DB: D1Database;
+  [key: string]: unknown;
 }
 
 export async function GET() {
   try {
-    // We cast the environment to our interface
     const { env } = getRequestContext<Env>();
     
     const sql = `
@@ -103,7 +104,7 @@ export async function GET() {
       );
     `;
 
-    // Now TypeScript will be happy
+    // Execute the SQL
     await env.DB.exec(sql);
 
     return NextResponse.json({ 
