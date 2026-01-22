@@ -1,13 +1,19 @@
 import { NextResponse } from 'next/server';
 import { getRequestContext } from '@cloudflare/next-on-pages';
+import { D1Database } from '@cloudflare/workers-types';
 
 export const runtime = 'edge';
 
+// We explicitly tell TypeScript that DB exists here
+interface Env {
+  DB: D1Database;
+}
+
 export async function GET() {
   try {
-    const { env } = getRequestContext();
+    // We cast the environment to our interface
+    const { env } = getRequestContext<Env>();
     
-    // The SQL command to build your entire million-dollar database structure
     const sql = `
       -- 1. Planners (The Users)
       CREATE TABLE IF NOT EXISTS planners (
@@ -97,7 +103,7 @@ export async function GET() {
       );
     `;
 
-    // Execute the SQL
+    // Now TypeScript will be happy
     await env.DB.exec(sql);
 
     return NextResponse.json({ 
