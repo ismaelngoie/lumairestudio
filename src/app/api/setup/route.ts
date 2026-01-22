@@ -5,19 +5,20 @@ export const runtime = 'edge';
 
 export async function GET() {
   try {
-    // Now this works automatically because we fixed src/env.d.ts
     const { env } = getRequestContext();
+
+    // DEBUG CHECK: Is the database actually connected?
+    if (!env || !env.DB) {
+      throw new Error("CRITICAL ERROR: The 'DB' binding is missing. The app cannot find the database.");
+    }
     
     const sql = `
-      -- 1. Planners (The Users)
       CREATE TABLE IF NOT EXISTS planners (
           id TEXT PRIMARY KEY,
           email TEXT UNIQUE NOT NULL,
           full_name TEXT,
           created_at INTEGER DEFAULT (unixepoch())
       );
-
-      -- 2. Clients (The Couples)
       CREATE TABLE IF NOT EXISTS clients (
           id TEXT PRIMARY KEY,
           planner_id TEXT NOT NULL,
@@ -29,8 +30,6 @@ export async function GET() {
           created_at INTEGER DEFAULT (unixepoch()),
           FOREIGN KEY (planner_id) REFERENCES planners(id)
       );
-
-      -- 3. Weddings (The Event Details)
       CREATE TABLE IF NOT EXISTS weddings (
           id TEXT PRIMARY KEY,
           client_id TEXT NOT NULL,
@@ -40,8 +39,6 @@ export async function GET() {
           status TEXT DEFAULT 'planning', 
           FOREIGN KEY (client_id) REFERENCES clients(id)
       );
-
-      -- 4. Tasks (The Workflow)
       CREATE TABLE IF NOT EXISTS tasks (
           id TEXT PRIMARY KEY,
           wedding_id TEXT NOT NULL,
@@ -52,8 +49,6 @@ export async function GET() {
           created_at INTEGER DEFAULT (unixepoch()),
           FOREIGN KEY (wedding_id) REFERENCES weddings(id)
       );
-
-      -- 5. Timeline Events
       CREATE TABLE IF NOT EXISTS timeline_events (
           id TEXT PRIMARY KEY,
           wedding_id TEXT NOT NULL,
@@ -63,8 +58,6 @@ export async function GET() {
           notes TEXT,
           FOREIGN KEY (wedding_id) REFERENCES weddings(id)
       );
-
-      -- 6. Vendors (Rolodex)
       CREATE TABLE IF NOT EXISTS vendors (
           id TEXT PRIMARY KEY,
           planner_id TEXT NOT NULL,
@@ -75,8 +68,6 @@ export async function GET() {
           phone TEXT,
           FOREIGN KEY (planner_id) REFERENCES planners(id)
       );
-
-      -- 7. Wedding Vendors (Assigning vendors to specific weddings)
       CREATE TABLE IF NOT EXISTS wedding_vendors (
           id TEXT PRIMARY KEY,
           wedding_id TEXT NOT NULL,
@@ -85,8 +76,6 @@ export async function GET() {
           FOREIGN KEY (wedding_id) REFERENCES weddings(id),
           FOREIGN KEY (vendor_id) REFERENCES vendors(id)
       );
-
-      -- 8. Social Tracking
       CREATE TABLE IF NOT EXISTS social_plans (
           id TEXT PRIMARY KEY,
           wedding_id TEXT NOT NULL,
@@ -104,11 +93,13 @@ export async function GET() {
       message: "✅ Database setup complete! All tables have been created successfully." 
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error(error);
+    // This explicitly sends the error text back to you
     return NextResponse.json({ 
       error: "Failed to setup database", 
-      details: error 
+      message: error.message,
+      stack: error.stack 
     }, { status: 500 });
   }
 }
