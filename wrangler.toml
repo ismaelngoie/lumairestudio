@@ -1,0 +1,8 @@
+name = "lumaire-studio"
+compatibility_date = "2024-02-08"
+compatibility_flags = ["nodejs_compat"]
+
+[d1_databases]
+binding = "DB"
+database_name = "lumairedb"
+database_id = "b0379aff-5734-4f1f-a1f4-b97699d61916"
