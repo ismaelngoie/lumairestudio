@@ -2,6 +2,9 @@ import React from 'react';
 import Link from 'next/link';
 import { TimelineBuilder } from '@/components/TimelineBuilder';
 
+// This line fixes the error
+export const runtime = 'edge';
+
 // Mock Data
 const client = { id: '1', couple: 'Sarah & James', date: 'Oct 12, 2026', venue: 'The Grand Hotel', guestCount: 150 };
 
