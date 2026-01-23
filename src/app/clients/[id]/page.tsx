@@ -6,6 +6,7 @@ import NotesWidget from '@/components/clients/NotesWidget';
 import TimelineEditor from '@/components/clients/TimelineEditor';
 import TaskAdder from '@/components/clients/TaskAdder';
 import WorkflowPicker from '@/components/clients/WorkflowPicker';
+import VendorTeam from '@/components/clients/VendorTeam'; // NEW
 
 export const runtime = 'edge';
 
@@ -18,11 +19,21 @@ async function getClientData(id: string) {
   const { results: messages } = await env.DB.prepare(`SELECT * FROM messages WHERE client_id = ? ORDER BY date DESC`).bind(id).all<any>();
   const { results: timeline } = await env.DB.prepare(`SELECT * FROM timeline_events WHERE client_id = ? ORDER BY start_time ASC`).bind(id).all<any>();
   const { results: templates } = await env.DB.prepare(`SELECT * FROM workflow_templates`).all<any>();
+  
+  // NEW: Fetch Assigned Vendors & All Vendors (for the picker)
+  const { results: assignedVendors } = await env.DB.prepare(`
+    SELECT va.id, va.role, v.name, v.company, v.category, v.email, v.phone
+    FROM vendor_assignments va
+    JOIN vendors v ON va.vendor_id = v.id
+    WHERE va.client_id = ?
+  `).bind(id).all<any>();
+  
+  const { results: allVendors } = await env.DB.prepare(`SELECT * FROM vendors ORDER BY category ASC`).all<any>();
 
   const totalContract = client.guest_count * 150; 
   const paidAmount = totalContract * 0.4; 
 
-  return { client, tasks, messages, timeline, templates, financials: { totalContract, paidAmount } };
+  return { client, tasks, messages, timeline, templates, assignedVendors, allVendors, financials: { totalContract, paidAmount } };
 }
 
 export default async function ClientProfile({ params }: { params: Promise<{ id: string }> }) {
@@ -30,7 +41,7 @@ export default async function ClientProfile({ params }: { params: Promise<{ id: 
   const data = await getClientData(id);
 
   if (!data) return <div className="p-12 text-center">Client not found.</div>;
-  const { client, tasks, messages, timeline, templates, financials } = data;
+  const { client, tasks, messages, timeline, templates, assignedVendors, allVendors, financials } = data;
 
   return (
     <main className="min-h-screen bg-lumaire-ivory p-8">
@@ -55,7 +66,12 @@ export default async function ClientProfile({ params }: { params: Promise<{ id: 
         {/* LEFT COLUMN */}
         <div className="lg:col-span-4 space-y-8">
           <div className="h-64"><NotesWidget clientId={client.id} initialNotes={client.notes} /></div>
+          
+          {/* NEW: VENDOR TEAM WIDGET */}
+          <VendorTeam clientId={client.id} assigned={assignedVendors} allVendors={allVendors} />
+
           <WorkflowPicker clientId={client.id} templates={templates} />
+          
           <Card title="Upcoming Tasks">
             <div className="space-y-3">
               {tasks.map((task: any) => (
@@ -73,7 +89,7 @@ export default async function ClientProfile({ params }: { params: Promise<{ id: 
           </Card>
         </div>
 
-        {/* RIGHT COLUMN - Passing the full CLIENT object here now */}
+        {/* RIGHT COLUMN */}
         <div className="lg:col-span-8">
            <TimelineEditor clientId={client.id} events={timeline} client={client} />
         </div>
