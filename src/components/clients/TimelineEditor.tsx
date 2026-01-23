@@ -72,37 +72,119 @@ export default function TimelineEditor({ clientId, events, client }: { clientId:
         <head>
           <title>Timeline - ${client.partner_1_name} & ${client.partner_2_name}</title>
           <style>
-            @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Lato:wght@400;700&display=swap');
-            body { font-family: 'Lato', sans-serif; background: #fff; color: #544541; padding: 40px; }
-            .header { text-align: center; margin-bottom: 60px; padding-bottom: 20px; border-bottom: 1px solid rgba(84, 69, 65, 0.2); }
-            h1 { font-family: 'Playfair Display', serif; font-size: 42px; margin: 0; }
-            .subtitle { text-transform: uppercase; letter-spacing: 3px; font-size: 12px; margin-top: 10px; opacity: 0.7; }
-            .timeline { max-width: 600px; margin: 0 auto; }
-            .event { display: flex; margin-bottom: 30px; position: relative; }
-            .time { width: 100px; font-weight: bold; text-align: right; padding-right: 30px; }
-            .line { position: absolute; left: 100px; top: 10px; bottom: -40px; width: 1px; background: rgba(84, 69, 65, 0.2); transform: translateX(-50%); }
-            .event:last-child .line { display: none; }
-            .dot { width: 10px; height: 10px; background: #544541; border-radius: 50%; position: absolute; left: 100px; top: 6px; transform: translateX(-50%); }
-            .activity { font-family: 'Playfair Display', serif; font-size: 20px; padding-left: 30px; }
-            @media print { @page { margin: 1cm; } }
+            @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500&family=Lato:wght@300;400;700&display=swap');
+            
+            body { 
+              font-family: 'Lato', sans-serif; 
+              background: #fff; 
+              color: #544541; 
+              padding: 60px; 
+              max-width: 800px; 
+              margin: 0 auto; 
+            }
+            
+            .header { 
+              text-align: center; 
+              margin-bottom: 70px; 
+            }
+            
+            .subtitle-small {
+              font-size: 11px;
+              text-transform: uppercase;
+              letter-spacing: 0.2em;
+              opacity: 0.6;
+              margin-bottom: 20px;
+            }
+            
+            h1 { 
+              font-family: 'Playfair Display', serif; 
+              font-size: 64px; 
+              margin: 0; 
+              font-weight: 400; 
+              line-height: 1.1;
+            }
+            
+            .details { 
+              font-size: 16px; 
+              margin-top: 25px;
+              opacity: 0.8;
+              letter-spacing: 0.05em;
+            }
+            
+            .timeline { 
+              position: relative; 
+              margin-left: 120px; 
+              padding-left: 40px; 
+              border-left: 1px solid rgba(84, 69, 65, 0.2); 
+            }
+            
+            .event { 
+              position: relative; 
+              margin-bottom: 50px; 
+            }
+            
+            .time { 
+              position: absolute;
+              left: -160px; 
+              top: -4px; 
+              width: 100px; 
+              text-align: right;
+              font-weight: 700; 
+              font-size: 18px; 
+            }
+            
+            .dot { 
+              width: 9px; 
+              height: 9px; 
+              background: #544541; 
+              border-radius: 50%; 
+              position: absolute; 
+              left: -45px; 
+              top: 6px; 
+            }
+            
+            .activity { 
+              font-family: 'Playfair Display', serif; 
+              font-size: 28px; 
+              margin: 0; 
+              line-height: 1.3;
+            }
+            
+            .notes {
+                font-family: 'Lato', sans-serif;
+                font-size: 14px;
+                opacity: 0.6;
+                margin-top: 8px;
+                font-style: italic;
+            }
+            
+            @media print {
+              @page { margin: 1.5cm; }
+              body { -webkit-print-color-adjust: exact; }
+            }
           </style>
         </head>
         <body>
           <div class="header">
+            <div class="subtitle-small">Official Timeline</div>
             <h1>${client.partner_1_name} & ${client.partner_2_name}</h1>
-            <div class="subtitle">${client.wedding_date} • ${client.venue_name}</div>
+            <div class="details">${client.wedding_date} • ${client.venue_name}</div>
           </div>
           <div class="timeline">
             ${events.map(evt => `
               <div class="event">
                 <div class="time">${evt.start_time}</div>
-                <div class="line"></div>
                 <div class="dot"></div>
                 <div class="activity">${evt.activity}</div>
+                ${evt.notes ? `<div class="notes">${evt.notes}</div>` : ''}
               </div>
             `).join('')}
           </div>
-          <script>window.onload = function() { window.print(); }</script>
+          <script>
+            document.fonts.ready.then(() => {
+                window.print(); 
+            });
+          </script>
         </body>
       </html>
     `;
