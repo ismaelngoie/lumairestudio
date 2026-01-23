@@ -8,7 +8,7 @@ import TaskAdder from '@/components/clients/TaskAdder';
 import WorkflowPicker from '@/components/clients/WorkflowPicker';
 import VendorTeam from '@/components/clients/VendorTeam';
 import DocumentManager from '@/components/clients/DocumentManager';
-import SocialManager from '@/components/clients/SocialManager'; // NEW
+import SocialManager from '@/components/clients/SocialManager';
 
 export const runtime = 'edge';
 
@@ -31,8 +31,6 @@ async function getClientData(id: string) {
   
   const { results: allVendors } = await env.DB.prepare(`SELECT * FROM vendors ORDER BY category ASC`).all<any>();
   const { results: documents } = await env.DB.prepare(`SELECT * FROM documents WHERE client_id = ? ORDER BY date DESC`).bind(id).all<any>();
-  
-  // NEW: Fetch Social Data
   const { results: social } = await env.DB.prepare(`SELECT * FROM social_tracker WHERE client_id = ?`).bind(id).all<any>();
 
   const totalContract = client.guest_count * 150; 
@@ -62,8 +60,9 @@ export default async function ClientProfile({ params }: { params: Promise<{ id: 
           </div>
         </div>
         <div className="flex gap-3">
+          {/* UPDATED BUTTONS: Now they scroll to their sections */}
           <a href="#documents" className="px-4 py-2 bg-lumaire-brown text-white text-sm hover:bg-lumaire-wine transition-colors">Documents</a>
-          <Link href="/vendors" className="px-4 py-2 border border-lumaire-brown/20 text-sm hover:bg-lumaire-brown hover:text-white transition-colors">Vendors</Link>
+          <a href="#vendors" className="px-4 py-2 border border-lumaire-brown/20 text-sm hover:bg-lumaire-brown hover:text-white transition-colors">Vendors</a>
         </div>
       </div>
 
@@ -90,9 +89,11 @@ export default async function ClientProfile({ params }: { params: Promise<{ id: 
             <TaskAdder clientId={client.id} />
           </Card>
 
-          <VendorTeam clientId={client.id} assigned={assignedVendors} allVendors={allVendors} />
+          {/* ADDED ID="vendors" FOR SCROLLING */}
+          <div id="vendors" className="scroll-mt-8">
+            <VendorTeam clientId={client.id} assigned={assignedVendors} allVendors={allVendors} />
+          </div>
           
-          {/* NEW: SOCIAL WIDGET */}
           <Card title="Social Media">
              <SocialManager clientId={client.id} data={social} />
           </Card>
@@ -101,7 +102,11 @@ export default async function ClientProfile({ params }: { params: Promise<{ id: 
         {/* RIGHT COLUMN */}
         <div className="lg:col-span-8 space-y-12">
            <TimelineEditor clientId={client.id} events={timeline} client={client} />
-           <DocumentManager clientId={client.id} documents={documents} />
+           
+           {/* ADDED ID="documents" FOR SCROLLING */}
+           <div id="documents" className="scroll-mt-8">
+             <DocumentManager clientId={client.id} documents={documents} />
+           </div>
         </div>
       </div>
     </main>
