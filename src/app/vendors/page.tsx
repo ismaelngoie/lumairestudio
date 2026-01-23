@@ -6,6 +6,7 @@ export const runtime = 'edge';
 
 export default async function VendorRolodex() {
   const { env } = getRequestContext();
+  // Fetch vendors sorted by category
   const { results: vendors } = await env.DB.prepare(`SELECT * FROM vendors ORDER BY category ASC, company ASC`).all<any>();
 
   return (
@@ -15,30 +16,72 @@ export default async function VendorRolodex() {
            <p className="text-sm font-sans uppercase tracking-widest text-lumaire-brown/60 mb-2">Network</p>
            <h1 className="text-4xl font-serif text-lumaire-brown">Vendor Rolodex</h1>
         </div>
-        <Link href="/vendors/new" className="px-6 py-3 bg-lumaire-brown text-white font-sans text-sm tracking-wide hover:bg-lumaire-wine transition-colors">
+        <Link 
+          href="/vendors/new" 
+          className="px-6 py-3 bg-lumaire-brown text-white font-sans text-sm tracking-wide hover:bg-lumaire-wine transition-colors"
+        >
           + Add Contact
         </Link>
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {vendors.map((vendor) => (
-          <div key={vendor.id} className="bg-white p-6 border border-lumaire-tan/20 hover:border-lumaire-brown/40 transition-colors group">
-             <div className="flex justify-between items-start mb-4">
-               <span className="text-[10px] uppercase tracking-widest bg-lumaire-tan/10 px-2 py-1 text-lumaire-brown rounded-sm">{vendor.category}</span>
-               <Link href={`/vendors/${vendor.id}`} className="text-lumaire-brown/20 group-hover:text-lumaire-brown transition-colors">✎ Edit</Link>
-             </div>
-             <h3 className="font-serif text-xl text-lumaire-brown mb-1">{vendor.company}</h3>
-             <p className="text-sm text-lumaire-brown/60 mb-4">{vendor.name}</p>
+          <div key={vendor.id} className="bg-white p-6 border border-lumaire-tan/20 hover:border-lumaire-brown/40 transition-colors group relative shadow-sm hover:shadow-md">
              
-             <div className="space-y-2 text-sm border-t border-lumaire-brown/5 pt-4">
-               <a href={`mailto:${vendor.email}`} className="block hover:text-lumaire-wine transition-colors">✉️ {vendor.email}</a>
-               <a href={`tel:${vendor.phone}`} className="block hover:text-lumaire-wine transition-colors">📞 {vendor.phone}</a>
+             {/* THE MAGICAL OVERLAY LINK (Makes the whole card clickable) */}
+             <Link href={`/vendors/${vendor.id}`} className="absolute inset-0 z-0">
+               <span className="sr-only">View Profile</span>
+             </Link>
+
+             {/* TOP ROW: Category & Edit */}
+             <div className="flex justify-between items-start mb-4 relative z-10">
+               <span className="text-[10px] uppercase tracking-widest bg-lumaire-tan/10 px-2 py-1 text-lumaire-brown rounded-sm">
+                 {vendor.category}
+               </span>
+               <span className="text-lumaire-brown/20 group-hover:text-lumaire-brown transition-colors text-xs uppercase font-bold">
+                 View ➔
+               </span>
+             </div>
+
+             {/* MAIN CONTENT */}
+             <div className="relative z-0 pointer-events-none"> 
+                {/* pointer-events-none ensures clicks pass through to the overlay link */}
+               <h3 className="font-serif text-xl text-lumaire-brown mb-1">{vendor.company}</h3>
+               <p className="text-sm text-lumaire-brown/60 mb-4">{vendor.name}</p>
+             </div>
+             
+             {/* BOTTOM ACTIONS (Clickable independently) */}
+             <div className="space-y-2 text-sm border-t border-lumaire-brown/5 pt-4 relative z-10">
+               <a 
+                 href={`mailto:${vendor.email}`} 
+                 className="block hover:text-lumaire-wine transition-colors w-fit"
+                 onClick={(e) => e.stopPropagation()} 
+               >
+                 ✉️ {vendor.email}
+               </a>
+               <a 
+                 href={`tel:${vendor.phone}`} 
+                 className="block hover:text-lumaire-wine transition-colors w-fit"
+                 onClick={(e) => e.stopPropagation()}
+               >
+                 📞 {vendor.phone}
+               </a>
                {vendor.website && (
-                 <a href={`https://${vendor.website}`} target="_blank" className="block opacity-60 hover:opacity-100 hover:underline">🌐 {vendor.website}</a>
+                 <a 
+                   href={`https://${vendor.website}`} 
+                   target="_blank" 
+                   rel="noopener noreferrer"
+                   className="block opacity-60 hover:opacity-100 hover:underline w-fit"
+                   onClick={(e) => e.stopPropagation()}
+                 >
+                   🌐 {vendor.website}
+                 </a>
                )}
              </div>
+
           </div>
         ))}
+
         {vendors.length === 0 && (
           <div className="col-span-3 text-center py-12 opacity-50 border border-dashed border-lumaire-brown/20">
             No vendors in your rolodex yet. Add your first contact!
