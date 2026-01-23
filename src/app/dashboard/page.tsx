@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
 import { getRequestContext } from '@cloudflare/next-on-pages';
 import TaskList from '@/components/dashboard/TaskList';
+import AutomationQueue from '@/components/dashboard/AutomationQueue';
 
 export const runtime = 'edge';
 
@@ -12,6 +13,7 @@ interface SumResult { total: number; }
 interface Task { id: string; title: string; category: string; due_date: string; is_completed: number; }
 interface Wedding { id: string; partner_1_name: string; partner_2_name: string; wedding_date: string; venue_name: string; }
 interface Message { id: string; type: 'email' | 'call' | 'text'; summary: string; date: string; partner_1_name: string; }
+interface EmailQueueItem { id: string; client_id: string; subject: string; body: string; type: string; due_date: string; status: string; }
 
 // --- DATA FETCHING ---
 async function getDashboardData() {
@@ -44,6 +46,9 @@ async function getDashboardData() {
   const totalRev = await env.DB.prepare("SELECT SUM(total_amount) as total FROM invoices").first<SumResult>();
   const pendingRev = await env.DB.prepare("SELECT SUM(total_amount) as total FROM invoices WHERE status != 'Paid'").first<SumResult>();
 
+  // 7. AUTOMATION QUEUE (Pending Emails)
+  const { results: emailQueue } = await env.DB.prepare("SELECT * FROM email_queue WHERE status = 'pending' ORDER BY due_date ASC").all<EmailQueueItem>();
+
   return {
     activeWeddings: stats?.count ?? 0,
     tasks: tasks || [],
@@ -51,9 +56,9 @@ async function getDashboardData() {
     messages: messages || [],
     nextDeadline: tasks.length > 0 ? tasks[0].due_date : "None",
     newClients: newClients || [],
-    // Financial Data
     revenue: totalRev?.total || 0,
-    pendingRevenue: pendingRev?.total || 0
+    pendingRevenue: pendingRev?.total || 0,
+    emailQueue: emailQueue || []
   };
 }
 
@@ -113,6 +118,9 @@ export default async function Dashboard() {
           <Card title="Today's Tasks">
              <TaskList initialTasks={data.tasks} />
           </Card>
+          
+          {/* AUTOMATION QUEUE (New "Review" Widget) */}
+          <AutomationQueue initialQueue={data.emailQueue} />
           
           {/* RECENT ACTIVITY BLOCK */}
           <div className="pt-8">
