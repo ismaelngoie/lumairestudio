@@ -25,7 +25,7 @@ export default async function VendorRolodex() {
           <div key={vendor.id} className="bg-white p-6 border border-lumaire-tan/20 hover:border-lumaire-brown/40 transition-colors group">
              <div className="flex justify-between items-start mb-4">
                <span className="text-[10px] uppercase tracking-widest bg-lumaire-tan/10 px-2 py-1 text-lumaire-brown rounded-sm">{vendor.category}</span>
-               <button className="text-lumaire-brown/20 group-hover:text-lumaire-brown transition-colors">✎</button>
+               <Link href={`/vendors/${vendor.id}`} className="text-lumaire-brown/20 group-hover:text-lumaire-brown transition-colors">✎ Edit</Link>
              </div>
              <h3 className="font-serif text-xl text-lumaire-brown mb-1">{vendor.company}</h3>
              <p className="text-sm text-lumaire-brown/60 mb-4">{vendor.name}</p>
