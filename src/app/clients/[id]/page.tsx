@@ -5,7 +5,7 @@ import { getRequestContext } from '@cloudflare/next-on-pages';
 import NotesWidget from '@/components/clients/NotesWidget';
 import TimelineEditor from '@/components/clients/TimelineEditor';
 import TaskAdder from '@/components/clients/TaskAdder';
-import WorkflowPicker from '@/components/clients/WorkflowPicker'; // NEW
+import WorkflowPicker from '@/components/clients/WorkflowPicker';
 
 export const runtime = 'edge';
 
@@ -17,8 +17,6 @@ async function getClientData(id: string) {
   const { results: tasks } = await env.DB.prepare(`SELECT * FROM tasks WHERE client_id = ? ORDER BY due_date ASC`).bind(id).all<any>();
   const { results: messages } = await env.DB.prepare(`SELECT * FROM messages WHERE client_id = ? ORDER BY date DESC`).bind(id).all<any>();
   const { results: timeline } = await env.DB.prepare(`SELECT * FROM timeline_events WHERE client_id = ? ORDER BY start_time ASC`).bind(id).all<any>();
-  
-  // NEW: Fetch available templates
   const { results: templates } = await env.DB.prepare(`SELECT * FROM workflow_templates`).all<any>();
 
   const totalContract = client.guest_count * 150; 
@@ -54,16 +52,10 @@ export default async function ClientProfile({ params }: { params: Promise<{ id: 
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-        
-        {/* LEFT COLUMN (4 cols wide) */}
+        {/* LEFT COLUMN */}
         <div className="lg:col-span-4 space-y-8">
-          <div className="h-64">
-             <NotesWidget clientId={client.id} initialNotes={client.notes} />
-          </div>
-
-          {/* NEW: WORKFLOW PICKER */}
+          <div className="h-64"><NotesWidget clientId={client.id} initialNotes={client.notes} /></div>
           <WorkflowPicker clientId={client.id} templates={templates} />
-
           <Card title="Upcoming Tasks">
             <div className="space-y-3">
               {tasks.map((task: any) => (
@@ -81,11 +73,10 @@ export default async function ClientProfile({ params }: { params: Promise<{ id: 
           </Card>
         </div>
 
-        {/* RIGHT COLUMN (8 cols wide) */}
+        {/* RIGHT COLUMN - Passing the full CLIENT object here now */}
         <div className="lg:col-span-8">
-           <TimelineEditor clientId={client.id} events={timeline} />
+           <TimelineEditor clientId={client.id} events={timeline} client={client} />
         </div>
-
       </div>
     </main>
   );
