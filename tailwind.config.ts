@@ -9,18 +9,22 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Colors from PDF Design Direction 
         lumaire: {
-          brown: "#544541", // Deep brown
-          tan: "#c4a092",   // Tan
-          wine: "#722410",  // Wine red
-          ivory: "#fffaeb", // Ivory
+          brown: "#544541", // Deep loam
+          tan: "#c4a092",   // Rose clay
+          wine: "#722410",  // Aged wine
+          cream: "#FDFCF8", // The new "Paper" background
+          ivory: "#fffaeb", // Kept for legacy compatibility
         }
       },
       fontFamily: {
-        serif: ['var(--font-playfair)', 'serif'], // For headers 
-        sans: ['var(--font-inter)', 'sans-serif'], // Clean readable font 
-        script: ['var(--font-pinyon)', 'cursive'], // Script for logo 
+        // Matches the CSS variables in the new code
+        serif: ['var(--font-playfair)', 'serif'], 
+        sans: ['var(--font-inter)', 'sans-serif'], 
+        script: ['var(--font-pinyon)', 'cursive'], 
+      },
+      backgroundImage: {
+        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
       }
     },
   },
