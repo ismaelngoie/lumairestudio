@@ -29,7 +29,7 @@ interface Message {
   type: 'email' | 'call' | 'text';
   summary: string;
   date: string;
-  partner_1_name: string; // We join this from the clients table
+  partner_1_name: string; 
 }
 
 // --- DATA FETCHING ENGINE ---
@@ -61,16 +61,15 @@ async function getDashboardData() {
   `).all<Message>();
 
   // 5. Deadlines: Calculate the immediate next deadline
-  // In a real app, you might compare dates, but taking the first sorted task is a fast, accurate proxy.
   const nextDeadline = tasks.length > 0 ? tasks[0].due_date : "No Deadlines";
 
   return {
     activeWeddings: stats?.count ?? 0,
     tasks: tasks || [],
     weddings: weddings || [],
-    messages: messages || [],
+    messages: messages || [], // This is the data you were missing
     nextDeadline,
-    estimatedRevenue: (stats?.count ?? 0) * 4500 // Simple logic: $4.5k avg per active client
+    estimatedRevenue: (stats?.count ?? 0) * 4500 
   };
 }
 
@@ -108,16 +107,11 @@ export default async function Dashboard() {
         </Card>
         <Card>
           <p className="text-xs uppercase tracking-widest opacity-60 mb-2">Next Deadline</p>
-          {/* Formats YYYY-MM-DD to a readable "Oct 12" style if valid, else shows raw string */}
-          <p className="font-serif text-2xl truncate">
-             {data.nextDeadline}
-          </p> 
+          <p className="font-serif text-2xl truncate">{data.nextDeadline}</p> 
         </Card>
         <Card>
            <p className="text-xs uppercase tracking-widest opacity-60 mb-2">Est. Revenue</p>
-           <p className="font-serif text-4xl">
-             ${data.estimatedRevenue.toLocaleString()}
-           </p>
+           <p className="font-serif text-4xl">${data.estimatedRevenue.toLocaleString()}</p>
         </Card>
       </div>
 
@@ -133,7 +127,6 @@ export default async function Dashboard() {
               <div className="space-y-1">
                 {data.tasks.map((task) => (
                   <div key={task.id} className="flex items-center group cursor-pointer p-3 hover:bg-lumaire-tan/10 rounded-sm transition-colors border-b border-lumaire-brown/5 last:border-0">
-                    {/* Custom Checkbox UI */}
                     <div className="w-5 h-5 border border-lumaire-brown rounded-full mr-4 flex-shrink-0 flex items-center justify-center hover:bg-lumaire-brown/10"></div>
                     <div className="flex-1">
                       <p className="font-medium text-lumaire-brown">{task.title}</p>
@@ -168,7 +161,7 @@ export default async function Dashboard() {
             </div>
           </Card>
 
-          {/* NEW FEATURE: Recent Messages Log [cite: 48] */}
+          {/* NEW FEATURE: Recent Messages Log */}
           <Card title="Recent Messages">
             <div className="space-y-4">
               {data.messages.length === 0 ? (
@@ -176,7 +169,6 @@ export default async function Dashboard() {
               ) : (
                 data.messages.map((msg) => (
                   <div key={msg.id} className="flex gap-3 items-start">
-                    {/* Icon based on message type */}
                     <div className="mt-1 w-6 h-6 flex items-center justify-center bg-lumaire-tan/20 rounded-full text-xs text-lumaire-brown">
                       {msg.type === 'email' ? '✉️' : msg.type === 'call' ? '📞' : '💬'}
                     </div>
