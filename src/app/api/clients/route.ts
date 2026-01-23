@@ -3,13 +3,24 @@ import { getRequestContext } from '@cloudflare/next-on-pages';
 
 export const runtime = 'edge';
 
+// Define what we expect from the frontend
+interface ClientData {
+  partner_1_name: string;
+  partner_2_name: string;
+  email: string;
+  wedding_date: string;
+  venue_name: string;
+  guest_count: number;
+}
+
 // HANDLE POST: Create a New Client
 export async function POST(request: Request) {
   try {
     const { env } = getRequestContext();
-    const data = await request.json();
+    // Explicitly tell TypeScript what this data looks like
+    const data = (await request.json()) as ClientData;
 
-    // Generate a simple ID (in a real app we might use UUIDs, but this works for now)
+    // Generate a simple ID
     const clientId = 'client-' + Date.now();
     const plannerId = 'planner-1'; // Hardcoded for this prototype
 
