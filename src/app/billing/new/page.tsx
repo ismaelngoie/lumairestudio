@@ -17,7 +17,13 @@ export default function NewInvoice() {
   });
 
   useEffect(() => {
-    fetch('/api/clients').then(res => res.json()).then(setClients);
+    fetch('/api/clients')
+      .then(res => res.json())
+      .then((data: any) => { // FIX: Explicitly cast data
+        if (Array.isArray(data)) {
+           setClients(data);
+        }
+      });
   }, []);
 
   const addItem = () => {
