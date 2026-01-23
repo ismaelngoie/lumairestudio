@@ -12,14 +12,29 @@ export async function GET() {
     }
 
     const statements = [
-      // --- CORE TABLES ---
-      `CREATE TABLE IF NOT EXISTS planners (
+      // --- STEP 1: RESET (DELETE OLD TABLES) ---
+      `DROP TABLE IF EXISTS wedding_vendors`,
+      `DROP TABLE IF EXISTS vendor_logs`,
+      `DROP TABLE IF EXISTS social_plans`,
+      `DROP TABLE IF EXISTS documents`,
+      `DROP TABLE IF EXISTS messages`,
+      `DROP TABLE IF EXISTS timeline_events`,
+      `DROP TABLE IF EXISTS workflow_template_items`,
+      `DROP TABLE IF EXISTS workflow_templates`,
+      `DROP TABLE IF EXISTS tasks`,
+      `DROP TABLE IF EXISTS weddings`,
+      `DROP TABLE IF EXISTS clients`,
+      `DROP TABLE IF EXISTS vendors`,
+      `DROP TABLE IF EXISTS planners`,
+
+      // --- STEP 2: REBUILD (CREATE NEW TABLES) ---
+      `CREATE TABLE planners (
           id TEXT PRIMARY KEY,
           email TEXT UNIQUE NOT NULL,
           full_name TEXT,
           created_at INTEGER DEFAULT (unixepoch())
       )`,
-      `CREATE TABLE IF NOT EXISTS clients (
+      `CREATE TABLE clients (
           id TEXT PRIMARY KEY,
           planner_id TEXT NOT NULL,
           partner_1_name TEXT NOT NULL,
@@ -34,15 +49,13 @@ export async function GET() {
           created_at INTEGER DEFAULT (unixepoch()),
           FOREIGN KEY (planner_id) REFERENCES planners(id)
       )`,
-      `CREATE TABLE IF NOT EXISTS weddings (
+      `CREATE TABLE weddings (
           id TEXT PRIMARY KEY,
           client_id TEXT NOT NULL,
           status TEXT DEFAULT 'planning', 
           FOREIGN KEY (client_id) REFERENCES clients(id)
       )`,
-      
-      // --- FEATURE: WORKFLOW & TASKS ---
-      `CREATE TABLE IF NOT EXISTS tasks (
+      `CREATE TABLE tasks (
           id TEXT PRIMARY KEY,
           client_id TEXT NOT NULL,
           title TEXT NOT NULL,
@@ -52,25 +65,21 @@ export async function GET() {
           created_at INTEGER DEFAULT (unixepoch()),
           FOREIGN KEY (client_id) REFERENCES clients(id)
       )`,
-      // MISSING TABLE 1: Workflow Templates (Reusable lists)
-      `CREATE TABLE IF NOT EXISTS workflow_templates (
+      `CREATE TABLE workflow_templates (
           id TEXT PRIMARY KEY,
           planner_id TEXT NOT NULL,
           name TEXT NOT NULL,
           description TEXT
       )`,
-      // MISSING TABLE 2: Template Items (The actual tasks in the template)
-      `CREATE TABLE IF NOT EXISTS workflow_template_items (
+      `CREATE TABLE workflow_template_items (
           id TEXT PRIMARY KEY,
           template_id TEXT NOT NULL,
           title TEXT NOT NULL,
           category TEXT,
-          days_before_wedding INTEGER, -- Auto-calculate due date based on this
+          days_before_wedding INTEGER,
           FOREIGN KEY (template_id) REFERENCES workflow_templates(id)
       )`,
-
-      // --- FEATURE: TIMELINE ---
-      `CREATE TABLE IF NOT EXISTS timeline_events (
+      `CREATE TABLE timeline_events (
           id TEXT PRIMARY KEY,
           client_id TEXT NOT NULL,
           start_time TEXT NOT NULL,
@@ -80,9 +89,7 @@ export async function GET() {
           order_index INTEGER DEFAULT 0,
           FOREIGN KEY (client_id) REFERENCES clients(id)
       )`,
-
-      // --- FEATURE: VENDOR ROLODEX ---
-      `CREATE TABLE IF NOT EXISTS vendors (
+      `CREATE TABLE vendors (
           id TEXT PRIMARY KEY,
           planner_id TEXT NOT NULL,
           business_name TEXT NOT NULL,
@@ -92,49 +99,40 @@ export async function GET() {
           phone TEXT,
           FOREIGN KEY (planner_id) REFERENCES planners(id)
       )`,
-      `CREATE TABLE IF NOT EXISTS wedding_vendors (
+      `CREATE TABLE wedding_vendors (
           id TEXT PRIMARY KEY,
           client_id TEXT NOT NULL,
           vendor_id TEXT NOT NULL,
-          status TEXT DEFAULT 'proposed', -- proposed, booked, paid
+          status TEXT DEFAULT 'proposed',
           FOREIGN KEY (client_id) REFERENCES clients(id),
           FOREIGN KEY (vendor_id) REFERENCES vendors(id)
       )`,
-      // MISSING TABLE 3: Vendor Logs (Communication notes)
-      `CREATE TABLE IF NOT EXISTS vendor_logs (
+      `CREATE TABLE vendor_logs (
           id TEXT PRIMARY KEY,
           vendor_id TEXT NOT NULL,
-          client_id TEXT, -- Optional: link note to specific wedding
+          client_id TEXT,
           note TEXT NOT NULL,
           created_at INTEGER DEFAULT (unixepoch()),
           FOREIGN KEY (vendor_id) REFERENCES vendors(id)
       )`,
-
-      // --- FEATURE: DOCUMENTS & STORAGE ---
-      // MISSING TABLE 4: Documents (Metadata for files)
-      `CREATE TABLE IF NOT EXISTS documents (
+      `CREATE TABLE documents (
           id TEXT PRIMARY KEY,
           client_id TEXT NOT NULL,
           name TEXT NOT NULL,
-          file_type TEXT, -- e.g., 'contract', 'moodboard'
-          url TEXT NOT NULL, -- Link to Cloudflare R2 or external storage
+          file_type TEXT,
+          url TEXT NOT NULL,
           uploaded_at INTEGER DEFAULT (unixepoch()),
           FOREIGN KEY (client_id) REFERENCES clients(id)
       )`,
-
-      // --- FEATURE: DASHBOARD MESSAGES ---
-      // MISSING TABLE 5: Messages (Logs of emails/calls)
-      `CREATE TABLE IF NOT EXISTS messages (
+      `CREATE TABLE messages (
           id TEXT PRIMARY KEY,
           client_id TEXT NOT NULL,
-          type TEXT, -- 'email', 'call', 'text'
+          type TEXT,
           summary TEXT NOT NULL,
           date TEXT,
           FOREIGN KEY (client_id) REFERENCES clients(id)
       )`,
-
-      // --- FEATURE: SOCIALS ---
-      `CREATE TABLE IF NOT EXISTS social_plans (
+      `CREATE TABLE social_plans (
           id TEXT PRIMARY KEY,
           client_id TEXT NOT NULL,
           platform TEXT,
@@ -149,7 +147,7 @@ export async function GET() {
     await env.DB.batch(batch);
 
     return NextResponse.json({ 
-      message: "✅ PRODUCTION Database setup complete! All 13 tables created." 
+      message: "✅ Database RESET and REBUILT successfully! The schema is now correct." 
     });
 
   } catch (error: any) {
