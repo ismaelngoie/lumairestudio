@@ -8,45 +8,33 @@ export async function GET() {
     const { env } = getRequestContext();
     const plannerId = 'planner-1';
     
-    // 1. Create Planner & Clients (Standard)
-    await env.DB.prepare(`INSERT OR IGNORE INTO planners (id, email, full_name) VALUES (?, ?, ?)`).bind(plannerId, 'demo@lumaire.com', 'Ismael Ngoie').run();
-    await env.DB.prepare(`INSERT OR IGNORE INTO clients (id, planner_id, partner_1_name, partner_2_name, email, wedding_date, venue_name, guest_count, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`)
-      .bind('client-1', plannerId, 'Sarah', 'James', 'sarah@example.com', '2026-10-12', 'The Grand Hotel', 150, 'active').run();
+    // 1. SETUP TABLES (Idempotent)
+    await env.DB.prepare(`CREATE TABLE IF NOT EXISTS vendors (id TEXT PRIMARY KEY, category TEXT, name TEXT, company TEXT, email TEXT, phone TEXT, website TEXT, notes TEXT)`).run();
+    await env.DB.prepare(`CREATE TABLE IF NOT EXISTS vendor_assignments (id TEXT PRIMARY KEY, client_id TEXT, vendor_id TEXT, role TEXT)`).run();
 
-    // 2. CREATE THE "MILLION DOLLAR" WORKFLOW TEMPLATE
-    // Delete old templates to ensure clean seed
-    await env.DB.prepare('DELETE FROM workflow_template_items').run();
-    await env.DB.prepare('DELETE FROM workflow_templates').run();
-
-    const templateId = 'tpl-full-service';
-    await env.DB.prepare(`INSERT INTO workflow_templates (id, planner_id, name, description) VALUES (?, ?, ?, ?)`)
-      .bind(templateId, plannerId, 'Full Service Planning', 'The complete A-Z checklist for luxury weddings.').run();
-
-    // 3. ADD 15+ AUTOMATED STEPS (The "Auto-Generate" Logic)
-    // days_before_wedding: How many days BEFORE the wedding is this due?
-    const steps = [
-      { days: 365, title: 'Define Budget & Priorities', cat: 'Planning' },
-      { days: 330, title: 'Scout & Book Venue', cat: 'Venue' },
-      { days: 300, title: 'Hire Photographer & Videographer', cat: 'Vendors' },
-      { days: 270, title: 'Book Catering & Bar', cat: 'Catering' },
-      { days: 240, title: 'Wedding Dress Shopping', cat: 'Attire' },
-      { days: 210, title: 'Book Florist & Decor', cat: 'Design' },
-      { days: 180, title: 'Send Save the Dates', cat: 'Stationery' },
-      { days: 150, title: 'Book Entertainment (DJ/Band)', cat: 'Entertainment' },
-      { days: 120, title: 'Order Wedding Cake', cat: 'Catering' },
-      { days: 90,  title: 'Send Formal Invitations', cat: 'Stationery' },
-      { days: 60,  title: 'Finalize Menu & Tasting', cat: 'Catering' },
-      { days: 45,  title: 'Create Seating Chart', cat: 'Planning' },
-      { days: 30,  title: 'Final Walkthrough at Venue', cat: 'Venue' },
-      { days: 14,  title: 'Confirm Vendor Arrival Times', cat: 'Logistics' },
-      { days: 7,   title: 'Pack Personal Items & Decor', cat: 'Logistics' }
+    // 2. CREATE VENDORS (The Rolodex)
+    await env.DB.prepare('DELETE FROM vendors').run();
+    
+    const vendors = [
+      { id: 'v-1', cat: 'Photography', name: 'Sarah Jenkins', comp: 'Lens & Light', email: 'sarah@lenslight.com', phone: '555-0101', web: 'lenslight.com' },
+      { id: 'v-2', cat: 'Floral', name: 'Roberto Flores', comp: 'Bloomsbury', email: 'rob@bloomsbury.com', phone: '555-0102', web: 'bloomsbury.com' },
+      { id: 'v-3', cat: 'Catering', name: 'Chef Mike', comp: 'Gourmet Bites', email: 'mike@gourmetbites.com', phone: '555-0103', web: 'gourmetbites.com' },
+      { id: 'v-4', cat: 'Music', name: 'DJ Pulse', comp: 'Pulse Events', email: 'booking@pulse.com', phone: '555-0104', web: 'pulseevents.com' },
+      { id: 'v-5', cat: 'Venue', name: 'Elena Fisher', comp: 'The Grand Hotel', email: 'events@grandhotel.com', phone: '555-0105', web: 'grandhotel.com' }
     ];
 
-    const stmt = env.DB.prepare(`INSERT INTO workflow_template_items (id, template_id, title, category, days_before_wedding) VALUES (?, ?, ?, ?, ?)`);
-    const batch = steps.map((s, i) => stmt.bind(`step-${i}`, templateId, s.title, s.cat, s.days));
-    await env.DB.batch(batch);
+    const vStmt = env.DB.prepare(`INSERT INTO vendors (id, category, name, company, email, phone, website, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`);
+    const vBatch = vendors.map(v => vStmt.bind(v.id, v.cat, v.name, v.comp, v.email, v.phone, v.web, 'Preferred vendor.'));
+    await env.DB.batch(vBatch);
 
-    return NextResponse.json({ message: "✅ Database seeded with 'Full Service' Workflow Template." });
+    // 3. ASSIGN VENDORS TO CLIENT (Sarah & James)
+    await env.DB.prepare('DELETE FROM vendor_assignments').run();
+    await env.DB.prepare(`INSERT INTO vendor_assignments (id, client_id, vendor_id, role) VALUES (?, ?, ?, ?)`)
+      .bind('assign-1', 'client-1', 'v-1', 'Primary Photographer').run();
+    await env.DB.prepare(`INSERT INTO vendor_assignments (id, client_id, vendor_id, role) VALUES (?, ?, ?, ?)`)
+      .bind('assign-2', 'client-1', 'v-5', 'Ceremony & Reception').run();
+
+    return NextResponse.json({ message: "✅ Database seeded with VENDORS and ASSIGNMENTS." });
 
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
