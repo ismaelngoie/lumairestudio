@@ -1,0 +1,37 @@
+import { NextResponse } from 'next/server';
+import { getRequestContext } from '@cloudflare/next-on-pages';
+
+export const runtime = 'edge';
+
+// HANDLE PATCH: Update Client Details (Notes, Phone, Status, etc.)
+export async function PATCH(
+  request: Request, 
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { env } = getRequestContext();
+    const { id } = await params;
+    const body = await request.json() as any; // Flexible update
+
+    // Dynamic Query Builder: Only update what is sent
+    // This allows us to update JUST notes, or JUST phone, or everything.
+    const updates: string[] = [];
+    const values: any[] = [];
+
+    if (body.notes !== undefined) { updates.push("notes = ?"); values.push(body.notes); }
+    if (body.phone !== undefined) { updates.push("phone = ?"); values.push(body.phone); }
+    if (body.status !== undefined) { updates.push("status = ?"); values.push(body.status); }
+    
+    if (updates.length === 0) return NextResponse.json({ success: true }); // Nothing to do
+
+    values.push(id); // Add ID for the WHERE clause
+
+    await env.DB.prepare(`
+      UPDATE clients SET ${updates.join(', ')} WHERE id = ?
+    `).bind(...values).run();
+
+    return NextResponse.json({ success: true });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
