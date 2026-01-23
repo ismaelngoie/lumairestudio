@@ -65,7 +65,7 @@ export default async function Dashboard() {
         </div>
         <div className="flex gap-4">
           <Link 
-            href="/clients" 
+            href="/add-client"  // <--- THIS IS THE FIX
             className="px-6 py-3 bg-lumaire-brown text-lumaire-ivory font-sans text-sm tracking-wide hover:bg-lumaire-wine transition-colors"
           >
             + New Client
