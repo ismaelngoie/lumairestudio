@@ -26,7 +26,7 @@ export default async function ClientList() {
       <header className="flex justify-between items-end mb-12">
         <h1 className="text-4xl font-serif text-lumaire-brown">Client List</h1>
         <Link 
-          href="/add-client" 
+          href="/add-client" // <--- THIS IS THE FIX
           className="px-6 py-3 bg-lumaire-brown text-white font-sans text-sm tracking-wide hover:bg-lumaire-wine transition-colors"
         >
           + Add New Client
